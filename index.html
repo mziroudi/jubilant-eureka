@@ -23,7 +23,10 @@ html,body{background:var(--bg);color:var(--fg)}
 body{font-family:var(--f-body);font-size:14px;line-height:1.45;
   padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));padding-block:20px 40px}
 .wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
-header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 18px}
+.lang{display:flex;gap:4px}
+.lang button{min-width:44px;font-weight:600}
+.lang button.on{background:var(--brass);color:#1b1406;border-color:var(--brass)}
 h1{font-family:var(--f-display);font-weight:400;font-size:clamp(26px,4vw,38px);margin:0;letter-spacing:.01em;text-wrap:balance}
 h1 span{color:var(--brass)}
 .sub{color:var(--muted);margin:0;max-width:70ch}
@@ -83,45 +86,47 @@ button.big{width:40px;height:40px;font-size:20px;padding:0}
 
 <div class="wrap">
   <header>
-    <h1>Mchina <span>Fiha Simulator</span></h1>  </header>
+    <h1>Mchina <span>Fiha Simulator</span></h1>
+    <div class="lang" id="lang" role="group" aria-label="Language"><button data-l="en">EN</button><button data-l="fr">FR</button></div>
+  </header>
 
   <div class="grid">
     <aside class="rail">
       <section class="box">
-        <div class="lab">Your HP at turn start</div>
+        <div class="lab" data-i18n="hp">Your HP at turn start</div>
         <div class="hpcards" id="hpcards"></div>
       </section>
 
       <section class="box">
-        <div class="lab">Melee hits this turn</div>
+        <div class="lab" data-i18n="melee">Melee hits this turn</div>
         <div class="row">
           <button class="big" id="mlMinus" aria-label="Remove one line">−</button>
           <span class="count" id="ml">0</span>
           <button class="big" id="mlPlus" aria-label="Add one line">+</button>
-          <button id="mlReset">Reset</button>
+          <button id="mlReset" data-i18n="reset">Reset</button>
         </div>
-        <div class="hint">Press + once per damage line you deal in melee.</div>
+        <div class="hint" data-i18n="meleeHint">Press + once per damage line you deal in melee.</div>
       </section>
 
       <section class="box">
-        <div class="lab">Target</div>
+        <div class="lab" data-i18n="target">Target</div>
         <div class="mobs" id="mobs"></div>
-        <div class="hint">Tap a monster to target it. Untick it when it dies.</div>
-        <div class="row"><span>Fight turn</span><button class="big" id="turnMinus" aria-label="Previous turn">−</button><span class="count" id="turnv">1</span><button class="big" id="turnPlus" aria-label="Next turn">+</button></div>
+        <div class="hint" data-i18n="targetHint">Tap a monster to target it. Untick it when it dies.</div>
+        <div class="row"><span data-i18n="turn">Fight turn</span><button class="big" id="turnMinus" aria-label="Previous turn">−</button><span class="count" id="turnv">1</span><button class="big" id="turnPlus" aria-label="Next turn">+</button></div>
         <div class="hint" id="parity"></div>
       </section>
 
       <details class="box settings">
-        <summary class="lab">Settings</summary>
-        <label class="chk"><input type="checkbox" id="summon"> Controlled summon (no confusion)</label>
-        <label class="chk"><input type="checkbox" id="glyph" checked> Show the Comte's Mi-temps glyph</label>
-        <div class="lab">Your spell</div>
-        <div class="row"><span>Range</span><input type="number" id="pomin" min="0" value="1" aria-label="Min range"><span>to</span><input type="number" id="pomax" min="0" value="6" aria-label="Max range"></div>
-        <div class="row"><span>MP to move</span><input type="number" id="mp" min="0" value="3" aria-label="Movement points"></div>
-        <label class="chk"><input type="checkbox" id="los" checked> Spell needs line of sight</label>
-        <div class="hint">Line of sight is approximate: blocks, you and the monsters on the map block it. Your allies aren't on this map.</div>
-        <label class="chk"><input type="checkbox" id="showGood" checked> Show cells where I can stand and hit</label>
-        <button id="resetMap">Reset map to screenshot</button>
+        <summary class="lab" data-i18n="settings">Settings</summary>
+        <label class="chk"><input type="checkbox" id="summon"> <span data-i18n="summon">Controlled summon (no confusion)</span></label>
+        <label class="chk"><input type="checkbox" id="glyph" checked> <span data-i18n="glyph">Show the Comte's Mi-temps glyph</span></label>
+        <div class="lab" data-i18n="spell">Your spell</div>
+        <div class="row"><span data-i18n="range">Range</span><input type="number" id="pomin" min="0" value="1" aria-label="Min range"><span data-i18n="to">to</span><input type="number" id="pomax" min="0" value="6" aria-label="Max range"></div>
+        <div class="row"><span data-i18n="mp">MP to move</span><input type="number" id="mp" min="0" value="3" aria-label="Movement points"></div>
+        <label class="chk"><input type="checkbox" id="los" checked> <span data-i18n="los">Spell needs line of sight</span></label>
+        <div class="hint" data-i18n="losHint">Line of sight is approximate: blocks, you and the monsters on the map block it. Your allies aren't on this map.</div>
+        <label class="chk"><input type="checkbox" id="showGood" checked> <span data-i18n="showGood">Show cells where I can stand and hit</span></label>
+        <button id="resetMap" data-i18n="resetMap">Reset map to screenshot</button>
       </details>
     </aside>
 
@@ -136,22 +141,22 @@ button.big{width:40px;height:40px;font-size:20px;padding:0}
       </section>
       <div class="map"><svg id="svg" role="img" aria-label="Fight map"></svg></div>
       <div class="legend">
-        <span><i class="sw" style="background:#ffd35c"></i>Click here</span>
-        <span><i class="sw" style="background:#7cc6e8"></i>You</span>
-        <span><i class="sw" style="background:#e0607a"></i>Target monster</span>
-        <span><i class="sw" style="background:#8a6a75"></i>Other monsters</span>
-        <span><i class="sw" style="background:#5fd39a"></i>Good place to stand</span>
-        <span><i class="sw" style="background:#7a2e35"></i>Mi-temps glyph</span>
-        <span><i class="sw" style="background:#2e5d78"></i>Your start cells</span>
+        <span><i class="sw" style="background:#ffd35c"></i><span data-i18n="lgClick">Click here</span></span>
+        <span><i class="sw" style="background:#7cc6e8"></i><span data-i18n="lgYou">You</span></span>
+        <span><i class="sw" style="background:#e0607a"></i><span data-i18n="lgTarget">Target monster</span></span>
+        <span><i class="sw" style="background:#8a6a75"></i><span data-i18n="lgOthers">Other monsters</span></span>
+        <span><i class="sw" style="background:#5fd39a"></i><span data-i18n="lgGood">Good place to stand</span></span>
+        <span><i class="sw" style="background:#7a2e35"></i><span data-i18n="lgGlyph">Mi-temps glyph</span></span>
+        <span><i class="sw" style="background:#2e5d78"></i><span data-i18n="lgStart">Your start cells</span></span>
       </div>
       <section class="box">
-        <div class="lab">Click mode</div>
+        <div class="lab" data-i18n="clickMode">Click mode</div>
         <div class="seg" id="modes">
-          <button data-m="you" class="on">Place me</button>
-          <button data-m="mob">Move target</button>
-          <button data-m="edit">Edit map</button>
+          <button data-m="you" class="on" data-i18n="placeMe">Place me</button>
+          <button data-m="mob" data-i18n="moveTarget">Move target</button>
+          <button data-m="edit" data-i18n="editMap">Edit map</button>
         </div>
-        <div class="hint">Left click: place yourself or pick a monster. Right click: move the target. Edit map: floor → block → hole.</div>
+        <div class="hint" data-i18n="modeHint">Left click: place yourself or pick a monster. Right click: move the target. Edit map: floor → block → hole.</div>
       </section>
     </main>
   </div>
@@ -186,7 +191,6 @@ const alive=()=>S.mobs.filter(m=>m.alive);
 const others=()=>alive().filter(m=>m!==tgt());
 const mobAt=c=>alive().find(m=>m.x===c.x&&m.y===c.y);
 
-const $=id=>document.getElementById(id);
 const inMap=(c)=>c.x>=0&&c.y>=0&&c.x<W&&c.y<H;
 const cell=(c)=>inMap(c)?map[c.y][c.x]:'.';
 const walk=(c)=>{const t=cell(c);return t==='o'||t==='P'||t==='M';};
@@ -196,8 +200,71 @@ const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
 // One screen-clockwise quarter turn on this iso grid: (x,y) -> (-y,x)
 const rotCW=(v,q)=>{q=((q%4)+4)%4;for(let i=0;i<q;i++)v={x:-v.y,y:v.x};return v;};
 
+const $=id=>document.getElementById(id);
+// ---------- language ----------
+const STR={
+en:{hp:"Your HP at turn start",melee:"Melee hits this turn",reset:"Reset",meleeHint:"Press + once per damage line you deal in melee.",
+target:"Target",targetHint:"Tap a monster to target it. Untick it when it dies.",turn:"Fight turn",settings:"Settings",
+summon:"Controlled summon (no confusion)",glyph:"Show the Comte's Mi-temps glyph",spell:"Your spell",range:"Range",to:"to",mp:"MP to move",
+los:"Spell needs line of sight",losHint:"Line of sight is approximate: blocks, you and the monsters on the map block it. Your allies aren't on this map.",
+showGood:"Show cells where I can stand and hit",resetMap:"Reset map to screenshot",clickMode:"Click mode",placeMe:"Place me",moveTarget:"Move target",editMap:"Edit map",
+modeHint:"Left click: place yourself or pick a monster. Right click: move the target. Edit map: floor → block → hole.",
+lgClick:"Click here",lgYou:"You",lgTarget:"Target monster",lgOthers:"Other monsters",lgGood:"Good place to stand",lgGlyph:"Mi-temps glyph",lgStart:"Your start cells",
+rot:["No rotation","90° clockwise","180°","90° counter-clockwise"],heartTo:"to",you:"YOU",youArrow:"you →",countArrow:"Comte →",onYou:"on you",
+clickDirect:"Click the monster <b>directly</b>",clickDir:d=>`Click <b>${d}</b> from you`,
+sub:(n,r,d,tu,ev)=>`Target: ${n} · confusion: ${r} · ${d} range · fight turn ${tu} (${ev?'even':'odd'})`,
+works:"This works from where you stand.",
+onT:n=>`The cell to click has ${n} on it. Click it anyway: the confusion still turns the spell onto your target.`,
+greens:n=>`Green cells (${n}) are places within your MP where the hit works; the number is the MP it costs.`,
+noGreens:"No cell within your MP works for this spell. Try other range settings or wait for the monster to move.",
+meleeNote:"Melee hit: after it lands, press + once per damage line so the next aim is right.",
+inGlyph:"You are inside the Mi-temps cross. If the Comte starts his turn here and you start yours here, you die.",
+hole:"The cell to click is a hole: you can't target it from here. Move.",off:"The cell to click is off the map: you can't target it from here. Move.",
+block:"The cell to click is a block: you can't target it from here. Move.",
+far:(d,a,b)=>`The monster is ${d} cells away but your spell reaches ${a}–${b}.`,
+losT:"No line of sight to the cell you click.",losM:"No line of sight from you to the monster: the redirected spell fails (critical failure).",
+oddDead:"Odd turn: hitting the Comte mirrors you to a cell that doesn't exist. The fight ends and the whole team dies.",
+odd:o=>`Odd turn: each damage line mirrors you to the other side of the Comte, so a 2-line spell brings you back where you started.${o?` ${o} stands on that cell: expect a swap with it.`:''}`,
+evenDead:"Even turn: the Comte would be mirrored onto a cell that doesn't exist. The fight ends and the whole team dies.",
+evenSwap:o=>`Even turn: the Comte lands on ${o} and swaps with it. This breaks his invulnerability. Each damage line mirrors him again, so use a 1-line hit for the swap.`,
+even:"Even turn: each damage line mirrors the Comte to the other side of you (a 2-line spell sends him back). Put an ally or a monster on the dashed cell to swap and break his invulnerability. Never use an allied summon there: every ally within 3 cells of the Comte's old cell dies.",
+parEven:"Even turn: the Comte can be made vulnerable.",parOdd:"Odd turn: the Comte is invulnerable.",pickTitle:"Make this monster the target",onMap:"On the map (untick when dead)"},
+fr:{hp:"Tes PV en début de tour",melee:"Coups au càc ce tour",reset:"Remettre à 0",meleeHint:"Appuie sur + pour chaque ligne de dommage faite au corps à corps.",
+target:"Cible",targetHint:"Clique un monstre pour le cibler. Décoche-le quand il meurt.",turn:"Tour du combat",settings:"Réglages",
+summon:"Invocation contrôlée (pas de confusion)",glyph:"Afficher le glyphe Mi-temps du Comte",spell:"Ton sort",range:"PO",to:"à",mp:"PM pour bouger",
+los:"Le sort demande la ligne de vue",losHint:"Ligne de vue approximative : les blocs, toi et les monstres la bloquent. Tes alliés ne sont pas sur cette carte.",
+showGood:"Montrer les cases d'où je peux taper",resetMap:"Remettre la carte d'origine",clickMode:"Mode de clic",placeMe:"Me placer",moveTarget:"Déplacer la cible",editMap:"Modifier la carte",
+modeHint:"Clic gauche : te placer ou choisir un monstre. Clic droit : déplacer la cible. Modifier la carte : sol → bloc → trou.",
+lgClick:"Clique ici",lgYou:"Toi",lgTarget:"Monstre ciblé",lgOthers:"Autres monstres",lgGood:"Bonne case où te placer",lgGlyph:"Glyphe Mi-temps",lgStart:"Tes cases de départ",
+rot:["Pas de rotation","90° horaire","180°","90° anti-horaire"],heartTo:"à",you:"MOI",youArrow:"toi →",countArrow:"Comte →",onYou:"sur toi",
+clickDirect:"Clique <b>directement</b> sur le monstre",clickDir:d=>`Clique <b>${d}</b> depuis toi`,
+sub:(n,r,d,tu,ev)=>`Cible : ${n} · confusion : ${r} · ${d} PO · tour ${tu} (${ev?'pair':'impair'})`,
+works:"Ça marche depuis ta case.",
+onT:n=>`La case à cliquer contient ${n}. Clique quand même : la confusion renvoie le sort sur ta cible.`,
+greens:n=>`Cases vertes (${n}) : là où tu peux aller avec tes PM pour toucher ; le chiffre = PM utilisés.`,
+noGreens:"Aucune case à portée de tes PM ne marche pour ce sort. Change la PO ou attends que le monstre bouge.",
+meleeNote:"Coup au càc : après le coup, appuie sur + pour chaque ligne de dommage pour viser juste ensuite.",
+inGlyph:"Tu es dans la croix Mi-temps. Si le Comte commence son tour ici et que tu commences le tien ici, tu meurs.",
+hole:"La case à cliquer est un trou : impossible de la viser d'ici. Bouge.",off:"La case à cliquer est hors de la carte : impossible de la viser d'ici. Bouge.",
+block:"La case à cliquer est un bloc : impossible de la viser d'ici. Bouge.",
+far:(d,a,b)=>`Le monstre est à ${d} cases mais ton sort a ${a} à ${b} PO.`,
+losT:"Pas de ligne de vue sur la case à cliquer.",losM:"Pas de ligne de vue entre toi et le monstre : le sort redirigé rate (échec critique).",
+oddDead:"Tour impair : taper le Comte te téléporte sur une case qui n'existe pas. Le combat s'arrête et toute l'équipe meurt.",
+odd:o=>`Tour impair : chaque ligne de dommage te téléporte de l'autre côté du Comte, donc un sort à 2 lignes te ramène sur ta case.${o?` ${o} est sur cette case : il y aura un échange.`:''}`,
+evenDead:"Tour pair : le Comte serait téléporté sur une case qui n'existe pas. Le combat s'arrête et toute l'équipe meurt.",
+evenSwap:o=>`Tour pair : le Comte arrive sur ${o} et échange de place avec lui. Ça lui retire son invulnérabilité. Chaque ligne le téléporte à nouveau, donc tape avec 1 seule ligne pour l'échange.`,
+even:"Tour pair : chaque ligne de dommage téléporte le Comte de l'autre côté de toi (un sort à 2 lignes le ramène). Mets un allié ou un monstre sur la case en pointillés pour l'échange et lui retirer son invulnérabilité. Jamais une invocation alliée : tous les alliés à 3 cases de l'ancienne case du Comte meurent.",
+parEven:"Tour pair : le Comte peut devenir vulnérable.",parOdd:"Tour impair : le Comte est invulnérable.",pickTitle:"Cibler ce monstre",onMap:"Sur la carte (décoche quand il meurt)"}};
+let LANG='en';
+try{LANG=localStorage.getItem('hb-lang')||((navigator.language||'').toLowerCase().startsWith('fr')?'fr':'en');}catch(e){LANG=(navigator.language||'').toLowerCase().startsWith('fr')?'fr':'en';}
+if(!STR[LANG])LANG='en';
+const t=(k,...a)=>{const v=STR[LANG][k];return typeof v==='function'?v(...a):v;};
+function applyLang(){document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(e=>{e.textContent=t(e.dataset.i18n);});
+  [...$('lang').children].forEach(b=>{b.classList.toggle('on',b.dataset.l===LANG);b.setAttribute('aria-pressed',b.dataset.l===LANG);});
+  [...$('hpcards').children].forEach((c,i)=>{c.innerHTML=heart(BRACKETS[i])+`<span>${t('rot')[BRACKETS[i].q].replace(/-/g,'&#8209;')}</span>`;});}
 const BRACKETS=[{lo:90,hi:100,q:1,label:"90° clockwise"},{lo:75,hi:89,q:3,label:"90° counter-clockwise"},{lo:45,hi:74,q:2,label:"180°"},{lo:30,hi:44,q:3,label:"90° counter-clockwise"},{lo:0,hi:29,q:1,label:"90° clockwise"}];
-const qName=q=>["No rotation","90° clockwise","180°","90° counter-clockwise"][((q%4)+4)%4];
+const qName=q=>t("rot")[((q%4)+4)%4];
 function rotation(){if($('summon').checked)return 0;return(((BRACKETS[S.b].q-S.lines)%4)+4)%4;}
 // The cell to click so a spell rotated by q clockwise lands on target
 const aimFrom=(from,target,q)=>add(from,rotCW(sub(target,from),4-q));
@@ -225,22 +292,22 @@ function evaluate(stand,q){
   const M=tgt(),T=aimFrom(stand,M,q),d=man(stand,M),blockers=others();
   const pomin=+$('pomin').value||0,pomax=+$('pomax').value||0,needLos=$('los').checked;
   const res={T,d,ok:true,issues:[],notes:[]};
-  if(!inMap(T)||cell(T)==='.'){res.ok=false;res.issues.push(inMap(T)?"The cell to click is a hole: you can't target it from here. Move.":"The cell to click is off the map: you can't target it from here. Move.");}
-  else if(cell(T)==='#'){res.ok=false;res.issues.push("The cell to click is a block: you can't target it from here. Move.");}
-  if(d<pomin||d>pomax){res.ok=false;res.issues.push(`The monster is ${d} cells away but your spell reaches ${pomin}–${pomax}.`);}
+  if(!inMap(T)||cell(T)==='.'){res.ok=false;res.issues.push(inMap(T)?t('hole'):t('off'));}
+  else if(cell(T)==='#'){res.ok=false;res.issues.push(t('block'));}
+  if(d<pomin||d>pomax){res.ok=false;res.issues.push(t("far",d,pomin,pomax));}
   if(needLos&&res.ok){
     const blockersT=[M,...blockers].filter(o=>!eq(o,T));
-    if(!los(stand,T,blockersT)){res.ok=false;res.issues.push("No line of sight to the cell you click.");}
-    if(!los(stand,M,blockers)){res.ok=false;res.issues.push("No line of sight from you to the monster: the redirected spell fails (critical failure).");}
+    if(!los(stand,T,blockersT)){res.ok=false;res.issues.push(t('losT'));}
+    if(!los(stand,M,blockers)){res.ok=false;res.issues.push(t('losM'));}
   }
   if(isCount()){
     if(!even()){const dest=add(M,sub(M,stand));res.dest={who:'you',c:dest};const occ=mobAt(dest);
-      if(!walk(dest)||eq(dest,M)){res.ok=false;res.deadly=true;res.issues.push("Odd turn: hitting the Count mirrors you to a cell that doesn't exist. The fight ends and the whole team dies.");}
-      else res.notes.push(`Odd turn: each damage line mirrors you to the other side of the Count, so a 2-line spell brings you back where you started.${occ?` The ${occ.name} stands on that cell: expect a swap with it.`:''}`);}
+      if(!walk(dest)||eq(dest,M)){res.ok=false;res.deadly=true;res.issues.push(t('oddDead'));}
+      else res.notes.push(t('odd',occ&&occ.name));}
     else{const dest=add(stand,sub(stand,M));res.dest={who:'count',c:dest};const occ=mobAt(dest);
-      if(!walk(dest)){res.ok=false;res.deadly=true;res.issues.push("Even turn: the Count would be mirrored onto a cell that doesn't exist. The fight ends and the whole team dies.");}
-      else if(occ){res.swap=true;res.notes.push(`Even turn: the Count lands on the ${occ.name} and swaps with it. This breaks his invulnerability. Each damage line mirrors him again, so use a 1-line hit for the swap.`);}
-      else res.notes.push("Even turn: each damage line mirrors the Count to the other side of you (a 2-line spell sends him back). Put an ally or a monster on the dashed cell to swap and break his invulnerability. Never use an allied summon there: every ally within 3 cells of the Count's old cell dies.");}
+      if(!walk(dest)){res.ok=false;res.deadly=true;res.issues.push(t('evenDead'));}
+      else if(occ){res.swap=true;res.notes.push(t('evenSwap',occ.name));}
+      else res.notes.push(t('even'));}
   }
   return res;}
 
@@ -265,7 +332,7 @@ function arrowDefs(){const d=el('defs',{},svg);
   const m2=el('marker',{id:'ah2',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto-start-reverse'},d);el('path',{d:'M0,0 L10,5 L0,10 z',fill:'#ffd35c'},m2);}
 
 function dirWords(v){const parts=[];
-  if(v.x)parts.push(`${Math.abs(v.x)} ${v.x>0?'↘':'↖'}`);if(v.y)parts.push(`${Math.abs(v.y)} ${v.y>0?'↙':'↗'}`);return parts.join(' + ')||'on you';}
+  if(v.x)parts.push(`${Math.abs(v.x)} ${v.x>0?'↘':'↖'}`);if(v.y)parts.push(`${Math.abs(v.y)} ${v.y>0?'↙':'↗'}`);return parts.join(' + ')||t('onYou');}
 
 function render(){
   svg.innerHTML='';arrowDefs();
@@ -284,7 +351,7 @@ function render(){
   // teleport ghost
   if(main.dest&&inMap(main.dest.c)){const p=iso(main.dest.c);
     el('polygon',{points:diamond(main.dest.c,0,.8),fill:'none',stroke:main.deadly?'#ff6b5e':main.swap?'#5fd39a':'#dfe9ee','stroke-width':2,'stroke-dasharray':'4 3'},gOver);
-    const t=el('text',{x:p.X,y:p.Y+4,'text-anchor':'middle','font-size':9,fill:main.deadly?'#ff6b5e':'#dfe9ee','font-family':'IBM Plex Sans, sans-serif'},gOver);t.textContent=main.dest.who==='you'?'you →':'Count →';}
+    const t=el('text',{x:p.X,y:p.Y+4,'text-anchor':'middle','font-size':9,fill:main.deadly?'#ff6b5e':'#dfe9ee','font-family':'IBM Plex Sans, sans-serif'},gOver);t.textContent=main.dest.who==='you'?STR[LANG].youArrow:STR[LANG].countArrow;}
   // hit cell
   const T=main.T;
   if(inMap(T)){el('polygon',{points:diamond(T),fill:main.ok?'#ffd35c':'#ff6b5e','fill-opacity':.85,stroke:'#fff3c4','stroke-width':2,class:'pulse'},gHit);
@@ -292,7 +359,7 @@ function render(){
   // depth-sorted blocks + tokens
   const items=[];
   for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(map[y][x]==='#')items.push({k:x+y,draw:()=>block({x,y})});
-  items.push({k:S.you.x+S.you.y+.5,draw:()=>token(S.you,'#7cc6e8','YOU')});
+  items.push({k:S.you.x+S.you.y+.5,draw:()=>token(S.you,'#7cc6e8',STR[LANG].you)});
   for(const m of alive())items.push({k:m.x+m.y+.5,draw:()=>token(m,m===tgt()?'#e0607a':'#8a6a75',m.short,m===tgt())});
   items.sort((a,b)=>a.k-b.k).forEach(i=>i.draw());
   function block(c){const{X,Y}=iso(c),w=TW/2,h=TH/2;
@@ -317,18 +384,18 @@ function render(){
 function renderVerdict(q,m,goods){
   const v=sub(m.T,S.you);
   const M=tgt();
-  $('vtitle').innerHTML=eq(m.T,M)?'Click the monster <b>directly</b>':`Click <b>${dirWords(v)}</b> from you`;
-  $('vsub').textContent=`Target: ${M.name} · confusion: ${qName(q)} · ${man(S.you,M)} range · fight turn ${S.turn} (${even()?'even':'odd'})`;
+  $('vtitle').innerHTML=eq(m.T,M)?t('clickDirect'):t('clickDir',dirWords(v));
+  $('vsub').textContent=t('sub',M.name,qName(q),man(S.you,M),S.turn,even());
   const onT=mobAt(m.T);
   const box=$('msgs');box.innerHTML='';
-  const add=(cls,t)=>{const d=document.createElement('div');d.className='msg '+cls;d.textContent=t;box.appendChild(d);};
-  if(m.ok)add('good','This works from where you stand.');
-  if(onT&&onT!==M)add('warn',`The cell to click has the ${onT.name} on it. Click it anyway: the confusion still turns the spell onto your target.`);
-  m.issues.forEach(t=>add('bad',t));m.notes.forEach(t=>add('',t));
-  if(!m.ok&&$('showGood').checked)add(goods.length?'warn':'bad',goods.length?`Green cells (${goods.length}) are places within your MP where the hit works; the number is the MP it costs.`:'No cell within your MP works for this spell. Try other range settings or wait for the monster to move.');
-  if(man(S.you,M)===1){add('warn','Melee hit: after it lands, press + once per damage line so the next aim is right.');
+  const add=(cls,x)=>{const d=document.createElement('div');d.className='msg '+cls;d.textContent=x;box.appendChild(d);};
+  if(m.ok)add('good',t('works'));
+  if(onT&&onT!==M)add('warn',t('onT',onT.name));
+  m.issues.forEach(x=>add('bad',x));m.notes.forEach(x=>add('',x));
+  if(!m.ok&&$('showGood').checked)add(goods.length?'warn':'bad',goods.length?t('greens',goods.length):t('noGreens'));
+  if(man(S.you,M)===1){add('warn',t('meleeNote'));
 }
-  if($('glyph').checked&&glyphCells().some(g=>eq(g,S.you)))add('bad','You are inside the Mi-temps cross. If the Count starts his turn here and you start yours here, you die.');
+  if($('glyph').checked&&glyphCells().some(g=>eq(g,S.you)))add('bad',t('inGlyph'));
   drawDial(q);}
 
 function drawDial(q){const d=$('dial');d.innerHTML='';
@@ -344,10 +411,10 @@ function drawDial(q){const d=$('dial');d.innerHTML='';
 
 function renderSide(q){
   [...$('hpcards').children].forEach((c,i)=>{c.classList.toggle('on',i===S.b);c.setAttribute('aria-pressed',i===S.b);});
-  $('ml').textContent=S.lines;$('turnv').textContent=S.turn;$('parity').textContent=even()?'Even turn: the Comte can be made vulnerable.':'Odd turn: the Comte is invulnerable.';
+  $('ml').textContent=S.lines;$('turnv').textContent=S.turn;$('parity').textContent=even()?t('parEven'):t('parOdd');
   renderMobList();}
-function heart(br){return `<svg viewBox="0 0 52 48" aria-hidden="true"><path d="M26 45 C10 33 2 25 2 14 C2 6 8 1 15 1 C20 1 24 4 26 8 C28 4 32 1 37 1 C44 1 50 6 50 14 C50 25 42 33 26 45 Z" fill="#d23a52" stroke="#7a1626" stroke-width="1.5"/><path d="M10 10 C12 6 16 5 19 6" stroke="#ffb3bf" stroke-width="2.5" fill="none" stroke-linecap="round"/><text x="26" y="17" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="IBM Plex Sans, sans-serif">${br.hi}%</text><text x="26" y="26" text-anchor="middle" font-size="7.5" fill="#fff" font-family="IBM Plex Sans, sans-serif">to</text><text x="26" y="35" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="IBM Plex Sans, sans-serif">${br.lo}%</text></svg>`;}
-BRACKETS.forEach((br,i)=>{const b=document.createElement('button');b.type='button';b.className='hpcard';b.id='hp'+i;b.innerHTML=heart(br)+`<span>${br.label.replace('counter-clockwise','counter&#8209;clockwise')}</span>`;b.onclick=()=>{S.b=i;render();};$('hpcards').appendChild(b);});
+function heart(br){return `<svg viewBox="0 0 52 48" aria-hidden="true"><path d="M26 45 C10 33 2 25 2 14 C2 6 8 1 15 1 C20 1 24 4 26 8 C28 4 32 1 37 1 C44 1 50 6 50 14 C50 25 42 33 26 45 Z" fill="#d23a52" stroke="#7a1626" stroke-width="1.5"/><path d="M10 10 C12 6 16 5 19 6" stroke="#ffb3bf" stroke-width="2.5" fill="none" stroke-linecap="round"/><text x="26" y="17" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="IBM Plex Sans, sans-serif">${br.hi}%</text><text x="26" y="26" text-anchor="middle" font-size="7.5" fill="#fff" font-family="IBM Plex Sans, sans-serif">${t('heartTo')}</text><text x="26" y="35" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="IBM Plex Sans, sans-serif">${br.lo}%</text></svg>`;}
+BRACKETS.forEach((br,i)=>{const b=document.createElement('button');b.type='button';b.className='hpcard';b.id='hp'+i;b.onclick=()=>{S.b=i;render();};$('hpcards').appendChild(b);});
 
 // ---------- events ----------
 function cellFromEvent(e){const t=e.target;if(t&&t.dataset&&t.dataset.x!==undefined)return{x:+t.dataset.x,y:+t.dataset.y};return null;}
@@ -361,10 +428,10 @@ function place(c,what){
   render();}
 function renderMobList(){const box=$('mobs');box.innerHTML='';
   S.mobs.forEach((m,i)=>{const row=document.createElement('div');row.className='mrow'+(i===S.t?' tgt':'')+(m.alive?'':' dead');
-    const b=document.createElement('button');b.className='pick';b.textContent=m.short;b.title='Make this monster the target';b.setAttribute('aria-label','Target '+m.name);
+    const b=document.createElement('button');b.className='pick';b.textContent=m.short;b.title=t('pickTitle');b.setAttribute('aria-label','Target '+m.name);
     b.onclick=()=>{if(!m.alive)return;S.t=i;render();};
     const s=document.createElement('span');s.className='nm';s.textContent=m.type==='count'?'Comte Harebourg':m.name;s.onclick=()=>{if(m.alive){S.t=i;render();}};
-    const l=document.createElement('label');l.className='chk';l.title='On the map (untick when dead)';
+    const l=document.createElement('label');l.className='chk';l.title=t('onMap');
     const c=document.createElement('input');c.type='checkbox';c.id='mobalive'+i;c.checked=m.alive;c.setAttribute('aria-label','On the map');
     c.onchange=()=>{if(!c.checked&&alive().length===1){c.checked=true;return;}
       if(c.checked&&(mobAt(m)||eq(m,S.you))){c.checked=false;return;}
@@ -377,7 +444,9 @@ $('mlPlus').onclick=()=>{S.lines++;render();};$('mlMinus').onclick=()=>{S.lines=
 const setTurn=v=>{S.turn=Math.max(1,v);S.lines=0;render();};$('turnPlus').onclick=()=>setTurn(S.turn+1);$('turnMinus').onclick=()=>setTurn(S.turn-1);
 ['summon','glyph','los','showGood','pomin','pomax','mp'].forEach(id=>$(id).addEventListener('input',render));
 $('resetMap').onclick=()=>{map=DEFAULT_MAP.map(r=>r.split(''));try{localStorage.removeItem('hb-map');}catch(e){}if(!walk(S.you))S.you={x:10,y:6};S.mobs.forEach((m,i)=>{if(!walk(m)){m.x=DEFAULT_MOBS[i].x;m.y=DEFAULT_MOBS[i].y;}});render();};
+$('lang').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;LANG=b.dataset.l;try{localStorage.setItem('hb-lang',LANG);}catch(x){}applyLang();render();});
 window.__hb={S,aimFrom,rotCW,evaluate,rotation,render};
+applyLang();
 render();
 })();
 </script>
