@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<title>Mchina Fiha Simulator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: control rail on the left, the clock-tower floor as the stage, verdict card pinned above the map. Single dark look (frost + brass). */
+:root{
+  color-scheme: dark;
+  --bg:#0d1419; --panel:#141e25; --panel-2:#1a2730; --line:#2a3a45;
+  --fg:#dfe9ee; --muted:#8aa1ad; --brass:#d6a64a; --frost:#7cc6e8;
+  --hit:#ffd35c; --danger:#ff6b5e; --ok:#5fd39a; --mob:#e0607a;
+  --tile-a:#3a4750; --tile-b:#33404a; --block:#9aa7ae;
+  --f-display:"Marcellus", "Palatino Linotype", Georgia, serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:14px;line-height:1.45;
+  padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(26px,4vw,38px);margin:0;letter-spacing:.01em;text-wrap:balance}
+h1 span{color:var(--brass)}
+.sub{color:var(--muted);margin:0;max-width:70ch}
+.grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.rail{display:flex;flex-direction:column;gap:12px;min-width:0}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.lab{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass);font-weight:600}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hint{color:var(--muted);font-size:12.5px}
+input[type=number]{width:72px;background:var(--panel-2);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;font-family:var(--f-mono)}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--brass)}
+select{background:var(--panel-2);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:7px 8px;font:inherit;width:100%}
+button{font:inherit;color:var(--fg);background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--frost);outline-offset:1px}
+button.on{background:var(--brass);color:#1b1406;border-color:var(--brass);font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg button{flex:1}
+.hpcards{display:flex;flex-direction:column;gap:6px}
+.hpcard{display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;gap:12px;padding:6px 12px 6px 6px;border-radius:10px;background:var(--panel-2);border:1px solid var(--line);text-align:left;font-family:var(--f-display);font-size:18px}
+.hpcard svg{width:52px;height:48px;display:block}
+.hpcard.on{border-color:var(--brass);background:linear-gradient(90deg,#3a3320,var(--panel-2));box-shadow:0 0 0 1px var(--brass),0 0 14px #d6a64a40;color:var(--fg);font-weight:400}
+@media (max-width:900px){.hpcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}
+button.big{width:40px;height:40px;font-size:20px;padding:0}
+.settings summary{cursor:pointer;list-style:none}
+.settings summary::before{content:"▸ ";color:var(--muted)}
+.settings[open] summary::before{content:"▾ "}
+.mrow .nm{font-size:14px}
+.count{font-family:var(--f-mono);font-size:22px;min-width:2ch;text-align:center}
+.stage{display:flex;flex-direction:column;gap:12px;min-width:0}
+.verdict{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 18px;align-items:center}
+@media (max-width:560px){.verdict{grid-template-columns:minmax(0,1fr)}}
+.dial{width:92px;height:92px}
+.vtitle{font-family:var(--f-display);font-size:22px;margin:0}
+.vtitle b{color:var(--hit);font-weight:400}
+.msgs{display:flex;flex-direction:column;gap:5px;grid-column:1/-1}
+.msg{padding:7px 10px;border-radius:6px;font-size:13px;border-left:3px solid var(--muted);background:var(--panel-2)}
+.msg.bad{border-color:var(--danger)} .msg.good{border-color:var(--ok)} .msg.warn{border-color:var(--hit)}
+.map{background:radial-gradient(ellipse at 50% 40%, #16232c 0%, var(--bg) 75%);border:1px solid var(--line);border-radius:10px;overflow-x:auto;padding:8px;user-select:none;-webkit-user-select:none}
+.map svg{display:block;width:100%;min-width:620px;height:auto;touch-action:manipulation}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.tip{font-size:13px}
+.tip ul{margin:4px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px}
+.mobs{display:flex;flex-direction:column;gap:6px}
+.mrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center}
+.mrow .pick{width:30px;height:30px;padding:0;border-radius:50%;font-size:11px;font-weight:600}
+.mrow.tgt .pick{background:var(--mob);border-color:var(--hit);color:#1b1406;box-shadow:0 0 0 2px var(--hit)}
+.mrow.dead{opacity:.45}
+.mrow select{padding:5px 6px}
+@keyframes pulse{0%{opacity:.95}50%{opacity:.45}100%{opacity:.95}}
+.pulse{animation:pulse 1.4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Mchina <span>Fiha Simulator</span></h1>  </header>
+
+  <div class="grid">
+    <aside class="rail">
+      <section class="box">
+        <div class="lab">Your HP at turn start</div>
+        <div class="hpcards" id="hpcards"></div>
+      </section>
+
+      <section class="box">
+        <div class="lab">Melee hits this turn</div>
+        <div class="row">
+          <button class="big" id="mlMinus" aria-label="Remove one line">−</button>
+          <span class="count" id="ml">0</span>
+          <button class="big" id="mlPlus" aria-label="Add one line">+</button>
+          <button id="mlReset">Reset</button>
+        </div>
+        <div class="hint">Press + once per damage line you deal in melee.</div>
+      </section>
+
+      <section class="box">
+        <div class="lab">Target</div>
+        <div class="mobs" id="mobs"></div>
+        <div class="hint">Tap a monster to target it. Untick it when it dies.</div>
+        <div class="row"><span>Fight turn</span><button class="big" id="turnMinus" aria-label="Previous turn">−</button><span class="count" id="turnv">1</span><button class="big" id="turnPlus" aria-label="Next turn">+</button></div>
+        <div class="hint" id="parity"></div>
+      </section>
+
+      <details class="box settings">
+        <summary class="lab">Settings</summary>
+        <label class="chk"><input type="checkbox" id="summon"> Controlled summon (no confusion)</label>
+        <label class="chk"><input type="checkbox" id="glyph" checked> Show the Comte's Mi-temps glyph</label>
+        <div class="lab">Your spell</div>
+        <div class="row"><span>Range</span><input type="number" id="pomin" min="0" value="1" aria-label="Min range"><span>to</span><input type="number" id="pomax" min="0" value="6" aria-label="Max range"></div>
+        <div class="row"><span>MP to move</span><input type="number" id="mp" min="0" value="3" aria-label="Movement points"></div>
+        <label class="chk"><input type="checkbox" id="los" checked> Spell needs line of sight</label>
+        <div class="hint">Line of sight is approximate: blocks, you and the monsters on the map block it. Your allies aren't on this map.</div>
+        <label class="chk"><input type="checkbox" id="showGood" checked> Show cells where I can stand and hit</label>
+        <button id="resetMap">Reset map to screenshot</button>
+      </details>
+    </aside>
+
+    <main class="stage">
+      <section class="verdict" aria-live="polite">
+        <svg class="dial" id="dial" viewBox="-50 -50 100 100" aria-hidden="true"></svg>
+        <div>
+          <p class="vtitle" id="vtitle"></p>
+          <div class="hint" id="vsub"></div>
+        </div>
+        <div class="msgs" id="msgs"></div>
+      </section>
+      <div class="map"><svg id="svg" role="img" aria-label="Fight map"></svg></div>
+      <div class="legend">
+        <span><i class="sw" style="background:#ffd35c"></i>Click here</span>
+        <span><i class="sw" style="background:#7cc6e8"></i>You</span>
+        <span><i class="sw" style="background:#e0607a"></i>Target monster</span>
+        <span><i class="sw" style="background:#8a6a75"></i>Other monsters</span>
+        <span><i class="sw" style="background:#5fd39a"></i>Good place to stand</span>
+        <span><i class="sw" style="background:#7a2e35"></i>Mi-temps glyph</span>
+        <span><i class="sw" style="background:#2e5d78"></i>Your start cells</span>
+      </div>
+      <section class="box">
+        <div class="lab">Click mode</div>
+        <div class="seg" id="modes">
+          <button data-m="you" class="on">Place me</button>
+          <button data-m="mob">Move target</button>
+          <button data-m="edit">Edit map</button>
+        </div>
+        <div class="hint">Left click: place yourself or pick a monster. Right click: move the target. Edit map: floor → block → hole.</div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(()=>{
+// Map rebuilt from the screenshot. Columns = x (goes ↘), rows = y (goes ↙).
+// o floor, # block, . hole, P player start, M monster start
+const DEFAULT_MAP=[".....oo.............","....oo#oo...........","..ooooooooooo.......",".ooooMoooooo#ooooo..",".oooMooooooo#Pooooo.","ooooooo..ooooPoooooo","ooooooo#.oPPoPooPPoo","ooo.Mooo..oPooo#Pooo","ooM..oooooPPoPooPPoo","oooooooooooooPoooooo",".oooMooooooo#Pooooo.",".oooooo#oooo#ooooo..","..ooooooooo.........","....ooooo..........."];
+const W=DEFAULT_MAP[0].length,H=DEFAULT_MAP.length;
+const TW=56,TH=28,BH=16;
+let map;
+function loadMap(){try{const s=localStorage.getItem('hb-map');if(s){const m=JSON.parse(s);if(m.length===H&&m[0].length===W)return m.map(r=>r.split(''));}}catch(e){}return DEFAULT_MAP.map(r=>r.split(''));}
+function saveMap(){try{localStorage.setItem('hb-map',JSON.stringify(map.map(r=>r.join(''))));}catch(e){}}
+map=loadMap();
+
+const MOBS={
+  count:{name:"Comte Harebourg",short:"C",tips:[
+    "Invulnerable except on even turns. To break it on an even turn, make the Count land on another entity when he is mirrored, so they swap places.",
+    "Odd turn: hitting him mirrors YOU to the opposite side of him. Even turn: hitting him mirrors HIM to the opposite side of you.",
+    "If the mirrored cell is a hole, a block or off the map, the fight ends and the whole team dies. The map checks this for you.",
+    "Mi-temps: at the start of his turn he lays a cross glyph (3 cells each way + his own cell). Anyone who starts their turn inside it dies.",
+    "The turn after you break invulnerability, Contretemps sends its target back to its turn-start cell. Don't let that cell be inside the glyph."]},
+};
+
+// Room 5: the Comte plus 4 monsters, on the red start cells of the screenshot.
+const DEFAULT_MOBS=[{type:'count',name:'Comte',short:'C',x:4,y:7},{type:'mob',name:'Mob 1',short:'1',x:2,y:8},{type:'mob',name:'Mob 2',short:'2',x:4,y:4},{type:'mob',name:'Mob 3',short:'3',x:5,y:3},{type:'mob',name:'Mob 4',short:'4',x:4,y:10}];
+const S={you:{x:10,y:6},mobs:DEFAULT_MOBS.map(m=>({...m,alive:true})),t:1,mode:'you',b:0,lines:0,turn:1};
+const tgt=()=>S.mobs[S.t];
+const alive=()=>S.mobs.filter(m=>m.alive);
+const others=()=>alive().filter(m=>m!==tgt());
+const mobAt=c=>alive().find(m=>m.x===c.x&&m.y===c.y);
+
+const $=id=>document.getElementById(id);
+const inMap=(c)=>c.x>=0&&c.y>=0&&c.x<W&&c.y<H;
+const cell=(c)=>inMap(c)?map[c.y][c.x]:'.';
+const walk=(c)=>{const t=cell(c);return t==='o'||t==='P'||t==='M';};
+const eq=(a,b)=>a&&b&&a.x===b.x&&a.y===b.y;
+const add=(a,b)=>({x:a.x+b.x,y:a.y+b.y}), sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
+const man=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+// One screen-clockwise quarter turn on this iso grid: (x,y) -> (-y,x)
+const rotCW=(v,q)=>{q=((q%4)+4)%4;for(let i=0;i<q;i++)v={x:-v.y,y:v.x};return v;};
+
+const BRACKETS=[{lo:90,hi:100,q:1,label:"90° clockwise"},{lo:75,hi:89,q:3,label:"90° counter-clockwise"},{lo:45,hi:74,q:2,label:"180°"},{lo:30,hi:44,q:3,label:"90° counter-clockwise"},{lo:0,hi:29,q:1,label:"90° clockwise"}];
+const qName=q=>["No rotation","90° clockwise","180°","90° counter-clockwise"][((q%4)+4)%4];
+function rotation(){if($('summon').checked)return 0;return(((BRACKETS[S.b].q-S.lines)%4)+4)%4;}
+// The cell to click so a spell rotated by q clockwise lands on target
+const aimFrom=(from,target,q)=>add(from,rotCW(sub(target,from),4-q));
+
+// Line of sight (approximate): blocks and entities on the cells the line crosses block it.
+function los(a,b,blockers){
+  if(eq(a,b))return true;
+  const n=Math.max(12,man(a,b)*12);
+  for(let i=1;i<n;i++){const t=i/n,x=a.x+(b.x-a.x)*t,y=a.y+(b.y-a.y)*t;
+    const e=1e-3,cand=new Map();
+    for(const dx of[-e,e])for(const dy of[-e,e]){const c={x:Math.round(x+dx),y:Math.round(y+dy)};cand.set(c.x+','+c.y,c);}
+    let allBlocked=true;
+    for(const c of cand.values()){if(eq(c,a)||eq(c,b)){allBlocked=false;break;}
+      const blk=cell(c)==='#'||blockers.some(o=>eq(o,c));if(!blk){allBlocked=false;break;}}
+    if(allBlocked)return false;}
+  return true;}
+
+const isCount=()=>tgt().type==='count';
+const even=()=>S.turn%2===0;
+const countMob=()=>alive().find(m=>m.type==='count');
+const glyphCells=()=>{const k=countMob();if(!k)return[];const c={x:k.x,y:k.y},out=[{...c}];for(const d of[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}])for(let k=1;k<=3;k++)out.push({x:c.x+d.x*k,y:c.y+d.y*k});return out;};
+
+// Full evaluation of "standing at S, hit monster M"
+function evaluate(stand,q){
+  const M=tgt(),T=aimFrom(stand,M,q),d=man(stand,M),blockers=others();
+  const pomin=+$('pomin').value||0,pomax=+$('pomax').value||0,needLos=$('los').checked;
+  const res={T,d,ok:true,issues:[],notes:[]};
+  if(!inMap(T)||cell(T)==='.'){res.ok=false;res.issues.push(inMap(T)?"The cell to click is a hole: you can't target it from here. Move.":"The cell to click is off the map: you can't target it from here. Move.");}
+  else if(cell(T)==='#'){res.ok=false;res.issues.push("The cell to click is a block: you can't target it from here. Move.");}
+  if(d<pomin||d>pomax){res.ok=false;res.issues.push(`The monster is ${d} cells away but your spell reaches ${pomin}–${pomax}.`);}
+  if(needLos&&res.ok){
+    const blockersT=[M,...blockers].filter(o=>!eq(o,T));
+    if(!los(stand,T,blockersT)){res.ok=false;res.issues.push("No line of sight to the cell you click.");}
+    if(!los(stand,M,blockers)){res.ok=false;res.issues.push("No line of sight from you to the monster: the redirected spell fails (critical failure).");}
+  }
+  if(isCount()){
+    if(!even()){const dest=add(M,sub(M,stand));res.dest={who:'you',c:dest};const occ=mobAt(dest);
+      if(!walk(dest)||eq(dest,M)){res.ok=false;res.deadly=true;res.issues.push("Odd turn: hitting the Count mirrors you to a cell that doesn't exist. The fight ends and the whole team dies.");}
+      else res.notes.push(`Odd turn: each damage line mirrors you to the other side of the Count, so a 2-line spell brings you back where you started.${occ?` The ${occ.name} stands on that cell: expect a swap with it.`:''}`);}
+    else{const dest=add(stand,sub(stand,M));res.dest={who:'count',c:dest};const occ=mobAt(dest);
+      if(!walk(dest)){res.ok=false;res.deadly=true;res.issues.push("Even turn: the Count would be mirrored onto a cell that doesn't exist. The fight ends and the whole team dies.");}
+      else if(occ){res.swap=true;res.notes.push(`Even turn: the Count lands on the ${occ.name} and swaps with it. This breaks his invulnerability. Each damage line mirrors him again, so use a 1-line hit for the swap.`);}
+      else res.notes.push("Even turn: each damage line mirrors the Count to the other side of you (a 2-line spell sends him back). Put an ally or a monster on the dashed cell to swap and break his invulnerability. Never use an allied summon there: every ally within 3 cells of the Count's old cell dies.");}
+  }
+  return res;}
+
+function reachable(){const mp=Math.max(0,+$('mp').value||0),start=S.you,seen=new Map([[start.x+','+start.y,0]]),q=[start];
+  while(q.length){const c=q.shift(),dist=seen.get(c.x+','+c.y);if(dist>=mp)continue;
+    for(const d of[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}]){const n=add(c,d),k=n.x+','+n.y;
+      if(seen.has(k)||!walk(n)||mobAt(n))continue;seen.set(k,dist+1);q.push(n);}}
+  return[...seen.entries()].map(([k,v])=>{const[x,y]=k.split(',').map(Number);return{x,y,mp:v};});}
+
+// ---------- rendering ----------
+const NS='http://www.w3.org/2000/svg';
+const iso=c=>({X:(c.x-c.y)*TW/2,Y:(c.x+c.y)*TH/2});
+const el=(t,a={},p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;};
+const diamond=(c,lift=0,shrink=1)=>{const{X,Y}=iso(c),w=TW/2*shrink,h=TH/2*shrink;return`${X},${Y-h-lift} ${X+w},${Y-lift} ${X},${Y+h-lift} ${X-w},${Y-lift}`;};
+const svg=$('svg');
+(function viewBox(){const xs=[],ys=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(DEFAULT_MAP[y][x]==='.')continue;const p=iso({x,y});xs.push(p.X);ys.push(p.Y);}
+  const minX=Math.min(...xs)-TW,maxX=Math.max(...xs)+TW,minY=Math.min(...ys)-TH-40,maxY=Math.max(...ys)+TH;
+  svg.setAttribute('viewBox',`${minX} ${minY} ${maxX-minX} ${maxY-minY}`);})();
+
+function arrowDefs(){const d=el('defs',{},svg);
+  const m=el('marker',{id:'ah',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto-start-reverse'},d);el('path',{d:'M0,0 L10,5 L0,10 z',fill:'#e0607a'},m);
+  const m2=el('marker',{id:'ah2',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto-start-reverse'},d);el('path',{d:'M0,0 L10,5 L0,10 z',fill:'#ffd35c'},m2);}
+
+function dirWords(v){const parts=[];
+  if(v.x)parts.push(`${Math.abs(v.x)} ${v.x>0?'↘':'↖'}`);if(v.y)parts.push(`${Math.abs(v.y)} ${v.y>0?'↙':'↗'}`);return parts.join(' + ')||'on you';}
+
+function render(){
+  svg.innerHTML='';arrowDefs();
+  const q=rotation(),main=evaluate(S.you,q);
+  const gTiles=el('g',{},svg),gOver=el('g',{},svg),gDepth=el('g',{},svg),gTop=el('g',{},svg),gHit=el('g',{},svg);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c={x,y},t=map[y][x];if(t==='.')continue;
+    const base=(x+y)%2?'#3a4750':'#33404a';
+    el('polygon',{points:diamond(c),fill:t==='P'?'#2e5d78':t==='M'?'#5a3640':base,stroke:'#22303a','stroke-width':1},gTiles);}
+  // glyph
+  if($('glyph').checked)for(const g of glyphCells())if(walk(g)||cell(g)==='#')el('polygon',{points:diamond(g,0,.9),fill:'#7a2e35','fill-opacity':.75,stroke:'#c0505a','stroke-width':1},gOver);
+  // good standing cells
+  const showGood=$('showGood').checked;let goods=[];
+  if(showGood){for(const r of reachable()){const ev=evaluate(r,q);if(ev.ok){goods.push(r);
+    el('polygon',{points:diamond(r,0,.62),fill:'none',stroke:'#5fd39a','stroke-width':2.5},gOver);
+    const p=iso(r);if(r.mp>0){const t=el('text',{x:p.X,y:p.Y+4,'text-anchor':'middle','font-size':10,'font-family':'IBM Plex Mono, monospace',fill:'#5fd39a'},gOver);t.textContent=r.mp;}}}}
+  // teleport ghost
+  if(main.dest&&inMap(main.dest.c)){const p=iso(main.dest.c);
+    el('polygon',{points:diamond(main.dest.c,0,.8),fill:'none',stroke:main.deadly?'#ff6b5e':main.swap?'#5fd39a':'#dfe9ee','stroke-width':2,'stroke-dasharray':'4 3'},gOver);
+    const t=el('text',{x:p.X,y:p.Y+4,'text-anchor':'middle','font-size':9,fill:main.deadly?'#ff6b5e':'#dfe9ee','font-family':'IBM Plex Sans, sans-serif'},gOver);t.textContent=main.dest.who==='you'?'you →':'Count →';}
+  // hit cell
+  const T=main.T;
+  if(inMap(T)){el('polygon',{points:diamond(T),fill:main.ok?'#ffd35c':'#ff6b5e','fill-opacity':.85,stroke:'#fff3c4','stroke-width':2,class:'pulse'},gHit);
+    const p=iso(T);el('circle',{cx:p.X,cy:p.Y,r:4,fill:'#1b1406'},gHit);}
+  // depth-sorted blocks + tokens
+  const items=[];
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(map[y][x]==='#')items.push({k:x+y,draw:()=>block({x,y})});
+  items.push({k:S.you.x+S.you.y+.5,draw:()=>token(S.you,'#7cc6e8','YOU')});
+  for(const m of alive())items.push({k:m.x+m.y+.5,draw:()=>token(m,m===tgt()?'#e0607a':'#8a6a75',m.short,m===tgt())});
+  items.sort((a,b)=>a.k-b.k).forEach(i=>i.draw());
+  function block(c){const{X,Y}=iso(c),w=TW/2,h=TH/2;
+    el('polygon',{points:`${X-w},${Y} ${X},${Y+h} ${X},${Y+h-BH} ${X-w},${Y-BH}`,fill:'#6f7b82'},gDepth);
+    el('polygon',{points:`${X+w},${Y} ${X},${Y+h} ${X},${Y+h-BH} ${X+w},${Y-BH}`,fill:'#57636a'},gDepth);
+    el('polygon',{points:diamond(c,BH),fill:'#a3b0b7',stroke:'#c3cdd2','stroke-width':1},gDepth);}
+  function token(c,col,label,ring){const{X,Y}=iso(c);
+    el('ellipse',{cx:X,cy:Y,rx:15,ry:7.5,fill:'#000','fill-opacity':.35},gDepth);
+    if(ring)el('ellipse',{cx:X,cy:Y,rx:19,ry:9.5,fill:'none',stroke:'#ffd35c','stroke-width':2},gDepth);
+    el('path',{d:`M${X-11},${Y} L${X-11},${Y-26} A11,11 0 0 1 ${X+11},${Y-26} L${X+11},${Y} A11,5.5 0 0 1 ${X-11},${Y} z`,fill:col,stroke:'#0d1419','stroke-width':1.5},gDepth);
+    const t=el('text',{x:X,y:Y-14,'text-anchor':'middle','font-size':label.length>2?8.5:11,'font-weight':600,fill:'#0d1419','font-family':'IBM Plex Sans, sans-serif'},gDepth);t.textContent=label;}
+  // lines: aim (you -> click cell) and landing (you -> monster)
+  const pY=iso(S.you),pM=iso(tgt()),pT=iso(T);
+  if(!eq(T,tgt())&&inMap(T))el('line',{x1:pY.X,y1:pY.Y-10,x2:pT.X,y2:pT.Y,stroke:'#ffd35c','stroke-width':2,'stroke-dasharray':'5 4','marker-end':'url(#ah2)'},gTop);
+  el('line',{x1:pY.X,y1:pY.Y-10,x2:pM.X,y2:pM.Y-12,stroke:'#e0607a','stroke-width':1.5,'stroke-opacity':.8,'marker-end':'url(#ah)'},gTop);
+  // interaction layer
+  const gI=el('g',{},svg);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const p=el('polygon',{points:diamond({x,y}),fill:'transparent','data-x':x,'data-y':y,style:'cursor:pointer'},gI);}
+  // verdict
+  renderVerdict(q,main,goods);renderSide(q);}
+
+function renderVerdict(q,m,goods){
+  const v=sub(m.T,S.you);
+  const M=tgt();
+  $('vtitle').innerHTML=eq(m.T,M)?'Click the monster <b>directly</b>':`Click <b>${dirWords(v)}</b> from you`;
+  $('vsub').textContent=`Target: ${M.name} · confusion: ${qName(q)} · ${man(S.you,M)} range · fight turn ${S.turn} (${even()?'even':'odd'})`;
+  const onT=mobAt(m.T);
+  const box=$('msgs');box.innerHTML='';
+  const add=(cls,t)=>{const d=document.createElement('div');d.className='msg '+cls;d.textContent=t;box.appendChild(d);};
+  if(m.ok)add('good','This works from where you stand.');
+  if(onT&&onT!==M)add('warn',`The cell to click has the ${onT.name} on it. Click it anyway: the confusion still turns the spell onto your target.`);
+  m.issues.forEach(t=>add('bad',t));m.notes.forEach(t=>add('',t));
+  if(!m.ok&&$('showGood').checked)add(goods.length?'warn':'bad',goods.length?`Green cells (${goods.length}) are places within your MP where the hit works; the number is the MP it costs.`:'No cell within your MP works for this spell. Try other range settings or wait for the monster to move.');
+  if(man(S.you,M)===1){add('warn','Melee hit: after it lands, press + once per damage line so the next aim is right.');
+}
+  if($('glyph').checked&&glyphCells().some(g=>eq(g,S.you)))add('bad','You are inside the Mi-temps cross. If the Count starts his turn here and you start yours here, you die.');
+  drawDial(q);}
+
+function drawDial(q){const d=$('dial');d.innerHTML='';
+  el('circle',{r:44,fill:'#141e25',stroke:'#d6a64a','stroke-width':2},d);
+  for(let i=0;i<12;i++){const a=i*Math.PI/6;el('line',{x1:Math.sin(a)*36,y1:-Math.cos(a)*36,x2:Math.sin(a)*(i%3?40:33),y2:-Math.cos(a)*(i%3?40:33),stroke:'#8aa1ad','stroke-width':i%3?1:2},d);}
+  const ang=[0,90,180,-90][q];
+  if(q){const r=24,a1=-Math.PI/2,a2=a1+ang*Math.PI/180,large=Math.abs(ang)>90?1:0,sw=ang>0?1:0;
+    el('path',{d:`M${r*Math.cos(a1)},${r*Math.sin(a1)} A${r},${r} 0 ${large} ${sw} ${r*Math.cos(a2)},${r*Math.sin(a2)}`,fill:'none',stroke:'#ffd35c','stroke-width':4,'stroke-linecap':'round'},d);
+    el('line',{x1:0,y1:0,x2:30*Math.cos(a2),y2:30*Math.sin(a2),stroke:'#ffd35c','stroke-width':3,'stroke-linecap':'round'},d);}
+  el('line',{x1:0,y1:0,x2:0,y2:-30,stroke:'#dfe9ee','stroke-width':2,'stroke-linecap':'round','stroke-opacity':q?.4:1},d);
+  el('circle',{r:4,fill:'#d6a64a'},d);
+  const t=el('text',{y:20,'text-anchor':'middle','font-size':10,fill:'#dfe9ee','font-family':'IBM Plex Mono, monospace'},d);t.textContent=['0°','90° ↻','180°','90° ↺'][q];}
+
+function renderSide(q){
+  [...$('hpcards').children].forEach((c,i)=>{c.classList.toggle('on',i===S.b);c.setAttribute('aria-pressed',i===S.b);});
+  $('ml').textContent=S.lines;$('turnv').textContent=S.turn;$('parity').textContent=even()?'Even turn: the Comte can be made vulnerable.':'Odd turn: the Comte is invulnerable.';
+  renderMobList();}
+function heart(br){return `<svg viewBox="0 0 52 48" aria-hidden="true"><path d="M26 45 C10 33 2 25 2 14 C2 6 8 1 15 1 C20 1 24 4 26 8 C28 4 32 1 37 1 C44 1 50 6 50 14 C50 25 42 33 26 45 Z" fill="#d23a52" stroke="#7a1626" stroke-width="1.5"/><path d="M10 10 C12 6 16 5 19 6" stroke="#ffb3bf" stroke-width="2.5" fill="none" stroke-linecap="round"/><text x="26" y="17" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="IBM Plex Sans, sans-serif">${br.hi}%</text><text x="26" y="26" text-anchor="middle" font-size="7.5" fill="#fff" font-family="IBM Plex Sans, sans-serif">to</text><text x="26" y="35" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="IBM Plex Sans, sans-serif">${br.lo}%</text></svg>`;}
+BRACKETS.forEach((br,i)=>{const b=document.createElement('button');b.type='button';b.className='hpcard';b.id='hp'+i;b.innerHTML=heart(br)+`<span>${br.label.replace('counter-clockwise','counter&#8209;clockwise')}</span>`;b.onclick=()=>{S.b=i;render();};$('hpcards').appendChild(b);});
+
+// ---------- events ----------
+function cellFromEvent(e){const t=e.target;if(t&&t.dataset&&t.dataset.x!==undefined)return{x:+t.dataset.x,y:+t.dataset.y};return null;}
+function place(c,what){
+  if(what==='edit'){const t=map[c.y][c.x];map[c.y][c.x]=t==='#'?'.':t==='.'?'o':'#';
+    if(!walk(S.you)&&eq(c,S.you))map[c.y][c.x]='o';if(mobAt(c))map[c.y][c.x]='o';saveMap();render();return;}
+  const hit=mobAt(c);
+  if(what==='you'&&hit){S.t=S.mobs.indexOf(hit);render();return;}
+  if(!walk(c)||hit)return;
+  if(what==='you')S.you=c;else{if(eq(c,S.you))return;tgt().x=c.x;tgt().y=c.y;}
+  render();}
+function renderMobList(){const box=$('mobs');box.innerHTML='';
+  S.mobs.forEach((m,i)=>{const row=document.createElement('div');row.className='mrow'+(i===S.t?' tgt':'')+(m.alive?'':' dead');
+    const b=document.createElement('button');b.className='pick';b.textContent=m.short;b.title='Make this monster the target';b.setAttribute('aria-label','Target '+m.name);
+    b.onclick=()=>{if(!m.alive)return;S.t=i;render();};
+    const s=document.createElement('span');s.className='nm';s.textContent=m.type==='count'?'Comte Harebourg':m.name;s.onclick=()=>{if(m.alive){S.t=i;render();}};
+    const l=document.createElement('label');l.className='chk';l.title='On the map (untick when dead)';
+    const c=document.createElement('input');c.type='checkbox';c.id='mobalive'+i;c.checked=m.alive;c.setAttribute('aria-label','On the map');
+    c.onchange=()=>{if(!c.checked&&alive().length===1){c.checked=true;return;}
+      if(c.checked&&(mobAt(m)||eq(m,S.you))){c.checked=false;return;}
+      m.alive=c.checked;if(!m.alive&&i===S.t)S.t=S.mobs.indexOf(alive()[0]);render();};
+    l.append(c);row.append(b,s,l);box.appendChild(row);});}
+svg.addEventListener('click',e=>{const c=cellFromEvent(e);if(c)place(c,S.mode);});
+svg.addEventListener('contextmenu',e=>{e.preventDefault();const c=cellFromEvent(e);if(c)place(c,S.mode==='edit'?'edit':'mob');});
+$('modes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.mode=b.dataset.m;[...$('modes').children].forEach(x=>x.classList.toggle('on',x===b));});
+$('mlPlus').onclick=()=>{S.lines++;render();};$('mlMinus').onclick=()=>{S.lines=Math.max(0,S.lines-1);render();};$('mlReset').onclick=()=>{S.lines=0;render();};
+const setTurn=v=>{S.turn=Math.max(1,v);S.lines=0;render();};$('turnPlus').onclick=()=>setTurn(S.turn+1);$('turnMinus').onclick=()=>setTurn(S.turn-1);
+['summon','glyph','los','showGood','pomin','pomax','mp'].forEach(id=>$(id).addEventListener('input',render));
+$('resetMap').onclick=()=>{map=DEFAULT_MAP.map(r=>r.split(''));try{localStorage.removeItem('hb-map');}catch(e){}if(!walk(S.you))S.you={x:10,y:6};S.mobs.forEach((m,i)=>{if(!walk(m)){m.x=DEFAULT_MOBS[i].x;m.y=DEFAULT_MOBS[i].y;}});render();};
+window.__hb={S,aimFrom,rotCW,evaluate,rotation,render};
+render();
+})();
+</script>
+
+</html>
