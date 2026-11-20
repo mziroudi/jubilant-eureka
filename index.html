@@ -94,8 +94,10 @@ body.compact{padding-block:6px;padding-left:8px;padding-right:8px;font-size:13px
 .compact h1{font-size:17px}
 .compact .grid{display:flex;flex-direction:column;gap:8px}
 .compact .stage{order:-1;gap:8px}
-.compact .legend,.compact .modebox{display:none}
-.compact .map{padding:2px}
+.compact .legend{display:none}
+.compact .modebox .lab{display:none}
+.compact .modebox .seg button{padding:5px 6px}
+.compact .map{padding:0;border-radius:8px}
 .compact .map svg{min-width:0}
 .compact .box{padding:8px 10px;gap:6px}
 .compact .hint:not(#parity){display:none}
@@ -369,7 +371,7 @@ const el=(t,a={},p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.
 const diamond=(c,lift=0,shrink=1)=>{const{X,Y}=iso(c),w=TW/2*shrink,h=TH/2*shrink;return`${X},${Y-h-lift} ${X+w},${Y-lift} ${X},${Y+h-lift} ${X-w},${Y-lift}`;};
 const svg=$('svg');
 (function viewBox(){const xs=[],ys=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(DEFAULT_MAP[y][x]==='.')continue;const p=iso({x,y});xs.push(p.X);ys.push(p.Y);}
-  const minX=Math.min(...xs)-TW,maxX=Math.max(...xs)+TW,minY=Math.min(...ys)-TH-40,maxY=Math.max(...ys)+TH;
+  const minX=Math.min(...xs)-TW/2-4,maxX=Math.max(...xs)+TW/2+4,minY=Math.min(...ys)-TH/2-34,maxY=Math.max(...ys)+TH/2+4;
   svg.setAttribute('viewBox',`${minX} ${minY} ${maxX-minX} ${maxY-minY}`);})();
 
 function arrowDefs(){const d=el('defs',{},svg);
@@ -497,7 +499,7 @@ async function openOverlay(){
   if(pipWin){closeOverlay();return;}
   const msg=$('pipmsg');msg.hidden=true;
   if(!('documentPictureInPicture' in window)){msg.textContent=t('pipNo');msg.hidden=false;return;}
-  try{pipWin=await window.documentPictureInPicture.requestWindow({width:460,height:860});}
+  try{pipWin=await window.documentPictureInPicture.requestWindow({width:640,height:900});}
   catch(e){pipWin=null;msg.textContent=t('pipNo');msg.hidden=false;return;}
   const pd=pipWin.document;
   document.querySelectorAll('style,link[rel="stylesheet"]').forEach(n=>pd.head.appendChild(n.cloneNode(true)));
